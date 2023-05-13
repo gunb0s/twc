@@ -5,9 +5,11 @@ import (
 	"github.com/PaulSonOfLars/gotgbot/v2"
 	"github.com/PaulSonOfLars/gotgbot/v2/ext"
 	"github.com/PaulSonOfLars/gotgbot/v2/ext/handlers"
+	"html/template"
 	"log"
 	"net/http"
 	"os"
+	"strings"
 	"telegramInsiderBot/db"
 	"telegramInsiderBot/insiders"
 	"time"
@@ -71,7 +73,35 @@ func ExecuteBot() {
 func insiderTrades(b *gotgbot.Bot, ctx *ext.Context) error {
 	var iths []insiders.InsiderTableHeader
 	db.DB.Where("filing_date LIKE ?", "2023-05-12%").Find(&iths)
-	_, err := ctx.EffectiveMessage.Reply(b, fmt.Sprintf("%v", iths), &gotgbot.SendMessageOpts{
+
+	today := time.Now().Format("2006-01-02")
+
+	templateStr := `
+		<b>
+			<i>Today {{.Today}} - Insider Sales $100K++</i>
+			{{range .Iths}}
+			<b>
+				<b>{{.InsiderName}}({{.Title}}) - {{.CompanyName}}({{.Ticker}}, {{.Price}})</b>
+				<u>{{.Value}}</u>
+			</b>
+			{{end}}
+		</b>
+	`
+
+	tmpl := template.Must(template.New("myTemplate").Parse(templateStr))
+	data := map[string]interface{}{
+		"Today": today,
+		"Iths":  iths,
+	}
+
+	var result strings.Builder
+
+	err := tmpl.ExecuteTemplate(&result, "myTemplate", data)
+	if err != nil {
+		panic(err)
+	}
+
+	_, err = ctx.EffectiveMessage.Reply(b, result.String(), &gotgbot.SendMessageOpts{
 		ParseMode: "html",
 	})
 	if err != nil {

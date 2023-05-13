@@ -19,6 +19,18 @@ type InsiderTableHeader struct {
 	Value       string
 }
 
+func (ith *InsiderTableHeader) parseData() InsiderTableHeader {
+	return InsiderTableHeader{
+		FilingDate:  ith.FilingDate,
+		Ticker:      ith.Ticker,
+		CompanyName: ith.CompanyName,
+		InsiderName: ith.InsiderName,
+		Title:       ith.Title,
+		Price:       ith.Price,
+		Value:       ith.Value,
+	}
+}
+
 func Crawl(db *gorm.DB) error {
 	c := colly.NewCollector()
 
